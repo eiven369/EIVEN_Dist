@@ -1,36 +1,29 @@
-<script>
-    function goDownload() {
-        const oid = document.getElementById('orderId').value.trim();
-        const msgDiv = document.getElementById('msg');
-        if(!oid) return;
-        
-        const salt = "EIVEN_SECURE_2026_SYSTEM_SALT_X9"; 
-        // 强制小写对齐
-        const hash = CryptoJS.SHA256(oid + salt).toString(CryptoJS.enc.Hex).toLowerCase().substring(0, 16);
-        
-        const targetDir = `./releases/${hash}/`;
-        const fileName = "EIVEN_V.E.py"; // 你的主程序名
+function goDownload() {
+            const oid = document.getElementById('orderId').value.trim();
+            const msgDiv = document.getElementById('msg');
+            if(!oid) return;
+            
+            const salt = "EIVEN_SECURE_2026_SYSTEM_SALT_X9"; 
+            const hash = CryptoJS.SHA256(oid + salt).toString(CryptoJS.enc.Hex).toLowerCase().substring(0, 16);
+            
+            // 指向 Builder.py 自动生成的压缩包
+            const zipUrl = `./releases/${hash}/EIVEN_Package.zip`;
+            
+            msgDiv.style.color = "#d35400";
+            msgDiv.innerText = "正在检索您的专属加密压缩包...";
 
-        msgDiv.style.color = "#888";
-        msgDiv.innerText = "校验中，请稍后...";
-
-        // 直接尝试访问主文件
-        fetch(targetDir + fileName, { method: 'HEAD' })
-            .then(res => {
-                if(res.ok) {
-                    msgDiv.style.color = "#00ff00";
-                    msgDiv.innerText = "✅ 验证通过！正在下载主程序...";
-                    // 1秒后直接跳转到文件下载，而不是文件夹
-                    setTimeout(() => {
-                        window.location.href = targetDir + fileName;
-                    }, 1000);
-                } else {
-                    msgDiv.style.color = "#ff4444";
-                    msgDiv.innerText = `❌ 未找到您的专属包。\n请检查 ID 是否输入正确。\n(Debug Hash: ${hash})`;
-                }
-            })
-            .catch(err => {
-                msgDiv.innerText = "❌ 连接失败，请检查网络或刷新重试。";
-            });
-    }
-</script>
+            fetch(zipUrl, { method: 'HEAD' })
+                .then(res => {
+                    if(res.ok) {
+                        msgDiv.style.color = "#00ff00";
+                        msgDiv.innerText = "✅ 验证通过！正在为您启动下载...";
+                        window.location.href = zipUrl; // 触发 ZIP 下载
+                    } else {
+                        msgDiv.style.color = "#ff4444";
+                        msgDiv.innerText = "❌ 未找到文件。请确认验证码正确或联系管理员同步。";
+                    }
+                })
+                .catch(() => {
+                    msgDiv.innerText = "❌ 连接异常，请检查网络或代理设置。";
+                });
+        }
