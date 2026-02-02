@@ -3,14 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EIVEN 安全分发系统</title>
+    <title>km识别脚本分发系统</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0e0e0e; color: #00ff00; text-align: center; padding-top: 100px; }
-        .container { border: 1px solid #333; display: inline-block; padding: 40px; border-radius: 10px; background: #1a1a1a; box-shadow: 0 0 20px rgba(211, 84, 0, 0.2); }
-        h1 { color: #d35400; margin-bottom: 10px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0e0e0e; color: #00ff00; text-align: center; padding-top: 80px; }
+        .container { border: 1px solid #333; display: inline-block; padding: 40px; border-radius: 10px; background: #1a1a1a; box-shadow: 0 0 20px rgba(0, 255, 0, 0.1); }
+        h1 { color: #d35400; margin-bottom: 20px; }
         input { background: #000; border: 1px solid #d35400; color: #fff; padding: 12px; width: 280px; margin-bottom: 20px; text-align: center; border-radius: 5px; outline: none; }
-        button { background: #d35400; color: #fff; border: none; padding: 12px 35px; cursor: pointer; font-weight: bold; border-radius: 5px; transition: 0.3s; }
-        button:hover { background: #e67e22; transform: scale(1.05); }
+        
+        /* 按钮样式组 */
+        .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+        button { border: none; padding: 12px 20px; cursor: pointer; font-weight: bold; border-radius: 5px; transition: 0.3s; color: #fff; min-width: 120px; }
+        
+        .btn-verify { background: #d35400; width: 100%; }
+        .btn-verify:hover { background: #e67e22; }
+
+        .btn-dl-prog { background: #2980b9; display: none; } /* 默认隐藏 */
+        .btn-dl-prog:hover { background: #3498db; }
+
+        .btn-dl-key { background: #27ae60; display: none; } /* 默认隐藏 */
+        .btn-dl-key:hover { background: #2ecc71; }
+
         #msg { margin-top: 25px; color: #888; font-size: 14px; min-height: 20px; white-space: pre-wrap; }
         .footer { margin-top: 50px; color: #444; font-size: 12px; }
     </style>
@@ -18,58 +30,85 @@
 </head>
 <body>
     <div class="container">
-        <h1>EIVEN 客户端领取</h1>
-        <p style="color: #ccc;">请输入您的订单验证码以获取专属加密包</p>
+        <h1>独立脚本分发</h1>
+        <p style="color: #ccc;">请输入您的订单验证码</p>
+        
         <input type="text" id="orderId" placeholder="输入 Order ID"> <br>
-        <button onclick="goDownload()">校验并下载</button>
+        
+        <button id="btnVerify" class="btn-verify" onclick="verifyAndShow()">校验 ID</button>
+        
+        <div class="btn-group">
+            <button id="btnProg" class="btn-dl-prog" onclick="download('PROGRAM')">📥 下载主程序</button>
+            <button id="btnKey" class="btn-dl-key" onclick="download('KEY')">🔑 下载密钥</button>
+        </div>
+
         <div id="msg"></div>
     </div>
     <div class="footer">Powered by EIVEN Secure Engine 2026</div>
 
     <script>
-        function goDownload() {
+        // 全局变量存储计算出的哈希
+        let currentHash = "";
+
+        function verifyAndShow() {
             const oid = document.getElementById('orderId').value.trim();
             const msgDiv = document.getElementById('msg');
-            
+            const btnVerify = document.getElementById('btnVerify');
+            const btnProg = document.getElementById('btnProg');
+            const btnKey = document.getElementById('btnKey');
+
             if(!oid) {
                 msgDiv.innerText = "⚠️ 请输入验证码";
                 return;
             }
-            
-            // 必须与 Builder.py 中的 LICENSE_SEED 保持完全一致
-            const salt = "EIVEN_SECURE_2026_SYSTEM_SALT_X9"; 
-            
-            try {
-                // 1. 计算哈希 (确保使用小写 hex)
-                const hash = CryptoJS.SHA256(oid + salt).toString(CryptoJS.enc.Hex).toLowerCase().substring(0, 16);
-                
-                // 2. 指向 ZIP 压缩包路径
-                const zipUrl = `./releases/${hash}/EIVEN_Package.zip`;
-                
-                msgDiv.style.color = "#d35400";
-                msgDiv.innerText = "正在检索您的专属加密压缩包...";
 
-                // 3. 探测文件并下载
-                fetch(zipUrl, { method: 'HEAD' })
+            const salt = "EIVEN_SECURE_2026_SYSTEM_SALT_X9"; 
+            try {
+                // 计算哈希
+                currentHash = CryptoJS.SHA256(oid + salt).toString(CryptoJS.enc.Hex).toLowerCase().substring(0, 16);
+                
+                msgDiv.style.color = "#888";
+                msgDiv.innerText = "正在验证...";
+
+                // 探测主程序是否存在
+                const checkUrl = `./releases/${currentHash}/EIVEN_Program.zip`;
+
+                fetch(checkUrl, { method: 'HEAD' })
                     .then(res => {
                         if(res.ok) {
                             msgDiv.style.color = "#00ff00";
-                            msgDiv.innerText = "✅ 验证通过！正在启动下载...";
-                            // 触发 ZIP 下载
-                            window.location.href = zipUrl; 
+                            msgDiv.innerText = "✅ 验证通过！请选择下载内容：";
+                            
+                            // 隐藏校验按钮，显示下载按钮
+                            btnVerify.style.display = "none";
+                            btnProg.style.display = "block";
+                            btnKey.style.display = "block";
+                            
+                            // 锁定输入框
+                            document.getElementById('orderId').disabled = true;
                         } else {
                             msgDiv.style.color = "#ff4444";
-                            msgDiv.innerText = "❌ 未找到文件。请确认验证码正确或联系管理员同步。";
+                            msgDiv.innerText = "❌ 未找到对应文件。请确认验证码或等待管理员生成。";
                         }
                     })
-                    .catch(err => {
-                        msgDiv.style.color = "#ff4444";
-                        msgDiv.innerText = "❌ 连接异常，请检查网络或代理设置。";
-                        console.error(err);
+                    .catch(() => {
+                        msgDiv.innerText = "❌ 网络连接异常 (Git Pages)";
                     });
-            } catch (e) {
-                msgDiv.innerText = "❌ 脚本错误: " + e.message;
+
+            } catch(e) {
+                msgDiv.innerText = "❌ 错误: " + e.message;
             }
+        }
+
+        function download(type) {
+            if(!currentHash) return;
+            
+            let fileName = "";
+            if(type === 'PROGRAM') fileName = "EIVEN_Program.zip";
+            else if(type === 'KEY') fileName = "EIVEN_License.zip";
+
+            const url = `./releases/${currentHash}/${fileName}`;
+            window.location.href = url;
         }
     </script>
 </body>
