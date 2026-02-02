@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EIVEN 安全分发系统</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0e0e0e; color: #00ff00; text-align: center; padding-top: 100px; }
+        .container { border: 1px solid #333; display: inline-block; padding: 40px; border-radius: 10px; background: #1a1a1a; box-shadow: 0 0 20px rgba(211, 84, 0, 0.2); }
+        h1 { color: #d35400; margin-bottom: 10px; }
+        input { background: #000; border: 1px solid #d35400; color: #fff; padding: 12px; width: 280px; margin-bottom: 20px; text-align: center; border-radius: 5px; outline: none; }
+        button { background: #d35400; color: #fff; border: none; padding: 12px 35px; cursor: pointer; font-weight: bold; border-radius: 5px; transition: 0.3s; }
+        button:hover { background: #e67e22; transform: scale(1.05); }
+        #msg { margin-top: 25px; color: #888; font-size: 14px; min-height: 20px; }
+        .footer { margin-top: 50px; color: #444; font-size: 12px; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>EIVEN 客户端领取</h1>
+        <p style="color: #ccc;">请输入您的订单验证码以获取专属加密包</p>
+        <input type="text" id="orderId" placeholder="输入 Order ID"> <br>
+        <button onclick="goDownload()">校验并下载</button>
+        <div id="msg"></div>
+    </div>
+    <div class="footer">Powered by EIVEN Secure Engine 2026</div>
+
+    <script>
+        function goDownload() {
+            const oid = document.getElementById('orderId').value.trim();
+            const msgDiv = document.getElementById('msg');
+            if(!oid) {
+                msgDiv.innerText = "⚠️ 请输入验证码";
+                return;
+            }
+            
+            [cite_start]// 必须与 Builder.py 中的 LICENSE_SEED 保持完全一致 [cite: 1]
+            const salt = "EIVEN_SECURE_2026_SYSTEM_SALT_X9"; 
+            
+            // 计算 SHA-256 哈希值并取前 16 位
+            const hash = CryptoJS.SHA256(oid + salt).toString().substring(0, 16);
+            
+            // 构建下载路径
+            const targetPath = `./releases/${hash}/`;
+            
+            msgDiv.style.color = "#888";
+            msgDiv.innerText = "正在检索文件库...";
+
+            // 验证该目录下是否存在主程序文件
+            fetch(targetPath + "EIVEN_V.E.py")
+                .then(res => {
+                    if(res.ok) {
+                        msgDiv.style.color = "#00ff00";
+                        msgDiv.innerText = "✅ 验证成功！正在跳转下载...";
+                        setTimeout(() => {
+                            // 跳转到该哈希文件夹
+                            window.location.href = targetPath;
+                        }, 1000);
+                    } else {
+                        msgDiv.style.color = "#ff4444";
+                        msgDiv.innerText = "❌ 验证码无效或文件尚未生成";
+                    }
+                })
+                .catch(err => {
+                    msgDiv.innerText = "网络错误，请稍后再试";
+                });
+        }
+    </script>
+</body>
+</html>
