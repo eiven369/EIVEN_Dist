@@ -11,7 +11,7 @@
         input { background: #000; border: 1px solid #d35400; color: #fff; padding: 12px; width: 280px; margin-bottom: 20px; text-align: center; border-radius: 5px; outline: none; }
         button { background: #d35400; color: #fff; border: none; padding: 12px 35px; cursor: pointer; font-weight: bold; border-radius: 5px; transition: 0.3s; }
         button:hover { background: #e67e22; transform: scale(1.05); }
-        #msg { margin-top: 25px; color: #888; font-size: 14px; min-height: 20px; }
+        #msg { margin-top: 25px; color: #888; font-size: 14px; min-height: 20px; white-space: pre-wrap; }
         .footer { margin-top: 50px; color: #444; font-size: 12px; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
@@ -30,41 +30,48 @@
         function goDownload() {
             const oid = document.getElementById('orderId').value.trim();
             const msgDiv = document.getElementById('msg');
+            
             if(!oid) {
                 msgDiv.innerText = "⚠️ 请输入验证码";
                 return;
             }
             
-            [cite_start]// 必须与 Builder.py 中的 LICENSE_SEED 保持完全一致 [cite: 1]
+            // 必须与 Builder.py 中的 LICENSE_SEED 保持完全一致 [cite: 1]
             const salt = "EIVEN_SECURE_2026_SYSTEM_SALT_X9"; 
             
-            // 计算 SHA-256 哈希值并取前 16 位
-            const hash = CryptoJS.SHA256(oid + salt).toString().substring(0, 16);
-            
-            // 构建下载路径
-            const targetPath = `./releases/${hash}/`;
-            
-            msgDiv.style.color = "#888";
-            msgDiv.innerText = "正在检索文件库...";
+            try {
+                // 1. 使用 CryptoJS 计算 SHA-256 并取前 16 位
+                const hash = CryptoJS.SHA256(oid + salt).toString(CryptoJS.enc.Hex).substring(0, 16);
+                
+                // 2. 拼接目标路径
+                const targetDir = `./releases/${hash}/`;
+                const mainFile = "EIVEN_V.E.py";
+                
+                msgDiv.style.color = "#888";
+                msgDiv.innerText = "正在检索安全库...";
 
-            // 验证该目录下是否存在主程序文件
-            fetch(targetPath + "EIVEN_V.E.py")
-                .then(res => {
-                    if(res.ok) {
-                        msgDiv.style.color = "#00ff00";
-                        msgDiv.innerText = "✅ 验证成功！正在跳转下载...";
-                        setTimeout(() => {
-                            // 跳转到该哈希文件夹
-                            window.location.href = targetPath;
-                        }, 1000);
-                    } else {
+                // 3. 检查文件是否存在
+                fetch(targetDir + mainFile, { method: 'HEAD' })
+                    .then(res => {
+                        if(res.ok) {
+                            msgDiv.style.color = "#00ff00";
+                            msgDiv.innerText = "✅ 验证通过！正在进入下载目录...";
+                            setTimeout(() => {
+                                // 跳转到哈希文件夹，用户可在此看到加密包和对应的密钥 
+                                window.location.href = targetDir;
+                            }, 800);
+                        } else {
+                            msgDiv.style.color = "#ff4444";
+                            msgDiv.innerText = "❌ 验证失败：未找到对应的包。\n请确认验证码正确，或检查 Builder.py 是否同步成功。";
+                        }
+                    })
+                    .catch(err => {
                         msgDiv.style.color = "#ff4444";
-                        msgDiv.innerText = "❌ 验证码无效或文件尚未生成";
-                    }
-                })
-                .catch(err => {
-                    msgDiv.innerText = "网络错误，请稍后再试";
-                });
+                        msgDiv.innerText = "❌ 请求被拦截，请尝试关闭代理/梯子后重试。";
+                    });
+            } catch (e) {
+                msgDiv.innerText = "❌ 脚本错误: " + e.message;
+            }
         }
     </script>
 </body>
