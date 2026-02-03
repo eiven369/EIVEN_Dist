@@ -3,113 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>km识别脚本分发系统</title>
+    <title>EIVEN 客户验证与下载中心</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0e0e0e; color: #00ff00; text-align: center; padding-top: 80px; }
-        .container { border: 1px solid #333; display: inline-block; padding: 40px; border-radius: 10px; background: #1a1a1a; box-shadow: 0 0 20px rgba(0, 255, 0, 0.1); }
-        h1 { color: #d35400; margin-bottom: 20px; }
-        input { background: #000; border: 1px solid #d35400; color: #fff; padding: 12px; width: 280px; margin-bottom: 20px; text-align: center; border-radius: 5px; outline: none; }
+        :root { --primary: #2c3e50; --accent: #3498db; --error: #e74c3c; --success: #2ecc71; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 400px; text-align: center; }
+        h2 { color: var(--primary); margin-bottom: 1.5rem; }
         
-        /* 按钮样式组 */
-        .btn-group { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
-        button { border: none; padding: 12px 20px; cursor: pointer; font-weight: bold; border-radius: 5px; transition: 0.3s; color: #fff; min-width: 120px; }
+        /* 状态提示框 */
+        .status-box { padding: 12px; border-radius: 6px; margin-bottom: 20px; font-size: 0.95rem; font-weight: bold; border: 1px solid transparent; transition: 0.3s; }
+        .status-loading { background: #f8f9fa; color: #666; border-color: #ddd; }
+        .status-open { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .status-closed { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .status-wait { background: #fff3cd; color: #856404; border-color: #ffeeba; }
+
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; transition: 0.3s; }
+        input:focus { border-color: var(--accent); outline: none; }
         
-        .btn-verify { background: #d35400; width: 100%; }
-        .btn-verify:hover { background: #e67e22; }
+        button { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        button:disabled { background: #bdc3c7; cursor: not-allowed; }
+        button:hover:not(:disabled) { background: #2980b9; }
+        
+        .hidden { display: none !important; }
+        
+        .result-area { margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; animation: fadeIn 0.5s; }
+        .download-btn { display: block; padding: 12px; margin-top: 10px; text-decoration: none; border-radius: 6px; background: #f8f9fa; border: 1px solid #ddd; color: #333; font-weight: bold; transition: 0.2s; }
+        .download-btn:hover { background: #e2e6ea; transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .download-btn.key { border-left: 5px solid #f1c40f; }
+        .download-btn.prog { border-left: 5px solid #3498db; }
 
-        .btn-dl-prog { background: #2980b9; display: none; } /* 默认隐藏 */
-        .btn-dl-prog:hover { background: #3498db; }
-
-        .btn-dl-key { background: #27ae60; display: none; } /* 默认隐藏 */
-        .btn-dl-key:hover { background: #2ecc71; }
-
-        #msg { margin-top: 25px; color: #888; font-size: 14px; min-height: 20px; white-space: pre-wrap; }
-        .footer { margin-top: 50px; color: #444; font-size: 12px; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .footer { margin-top: 20px; font-size: 12px; color: #999; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>独立脚本分发</h1>
-        <p style="color: #ccc;">请输入您的订单验证码</p>
-        
-        <input type="text" id="orderId" placeholder="输入 Order ID"> <br>
-        
-        <button id="btnVerify" class="btn-verify" onclick="verifyAndShow()">校验 ID</button>
-        
-        <div class="btn-group">
-            <button id="btnProg" class="btn-dl-prog" onclick="download('PROGRAM')">📥 下载主程序</button>
-            <button id="btnKey" class="btn-dl-key" onclick="download('KEY')">🔑 下载密钥</button>
-        </div>
 
-        <div id="msg"></div>
+<div class="card">
+    <h2>EIVEN 下载中心</h2>
+    
+    <div id="statusBox" class="status-box status-loading">正在连接服务器规则...</div>
+    
+    <div id="timeMsg" style="margin-bottom: 15px; color: #666; font-size: 0.85rem;"></div>
+
+    <div id="inputArea" class="hidden">
+        <input type="text" id="orderId" placeholder="请输入您的验证码 (Order ID)">
+        <button id="btnVerify" onclick="checkAndDownload()">查询并获取文件</button>
     </div>
-    <div class="footer">Powered by EIVEN Secure Engine 2026</div>
 
-    <script>
-        // 全局变量存储计算出的哈希
-        let currentHash = "";
+    <div id="resultArea" class="hidden result-area">
+        <p style="color:var(--success); font-weight:bold; margin-bottom: 15px;">✅ 验证通过</p>
+        <a id="linkProg" class="download-btn prog" href="#" target="_blank">📦 下载主程序 (Program)</a>
+        <a id="linkKey" class="download-btn key" href="#" target="_blank">🔑 下载最新密钥 (License)</a>
+        <div style="margin-top:10px; font-size:12px; color:#888;">注意：下载后请解压使用</div>
+    </div>
 
-        function verifyAndShow() {
-            const oid = document.getElementById('orderId').value.trim();
-            const msgDiv = document.getElementById('msg');
-            const btnVerify = document.getElementById('btnVerify');
-            const btnProg = document.getElementById('btnProg');
-            const btnKey = document.getElementById('btnKey');
+    <div class="footer">Powered by EIVEN Secure System</div>
+</div>
 
-            if(!oid) {
-                msgDiv.innerText = "⚠️ 请输入验证码";
-                return;
-            }
+<script>
+    // =======================================================
+    // [配置] 必须与 Builder.py 中的 LICENSE_SEED 保持完全一致
+    const SEED = "EIVEN_SECURE_2026_SYSTEM_SALT_X9"; 
+    // =======================================================
 
-            const salt = "EIVEN_SECURE_2026_SYSTEM_SALT_X9"; 
-            try {
-                // 计算哈希
-                currentHash = CryptoJS.SHA256(oid + salt).toString(CryptoJS.enc.Hex).toLowerCase().substring(0, 16);
-                
-                msgDiv.style.color = "#888";
-                msgDiv.innerText = "正在验证...";
+    const statusBox = document.getElementById('statusBox');
+    const inputArea = document.getElementById('inputArea');
+    const timeMsg = document.getElementById('timeMsg');
+    const resultArea = document.getElementById('resultArea');
 
-                // 探测主程序是否存在
-                const checkUrl = `./releases/${currentHash}/EIVEN_Program.zip`;
+    // 页面加载完毕后，立即执行“查岗”任务
+    window.onload = function() {
+        checkServerRules();
+    };
 
-                fetch(checkUrl, { method: 'HEAD' })
-                    .then(res => {
-                        if(res.ok) {
-                            msgDiv.style.color = "#00ff00";
-                            msgDiv.innerText = "✅ 验证通过！请选择下载内容：";
-                            
-                            // 隐藏校验按钮，显示下载按钮
-                            btnVerify.style.display = "none";
-                            btnProg.style.display = "block";
-                            btnKey.style.display = "block";
-                            
-                            // 锁定输入框
-                            document.getElementById('orderId').disabled = true;
-                        } else {
-                            msgDiv.style.color = "#ff4444";
-                            msgDiv.innerText = "❌ 未找到对应文件。请确认验证码或等待管理员生成。";
-                        }
-                    })
-                    .catch(() => {
-                        msgDiv.innerText = "❌ 网络连接异常 (Git Pages)";
-                    });
+    function checkServerRules() {
+        // 添加时间戳 t=... 防止浏览器缓存旧的规则文件
+        fetch('server_status.json?t=' + new Date().getTime())
+            .then(response => {
+                if (!response.ok) throw new Error("规则文件丢失");
+                return response.json();
+            })
+            .then(config => {
+                applyRules(config);
+            })
+            .catch(err => {
+                console.error(err);
+                // 如果找不到规则文件，为了安全起见，默认锁死
+                lockDown("status-closed", "❌ 无法连接到服务器规则库 (404)", "请联系管理员检查推送状态");
+            });
+    }
 
-            } catch(e) {
-                msgDiv.innerText = "❌ 错误: " + e.message;
-            }
+    function applyRules(config) {
+        // 1. 检查总开关 (Builder中的“开启开放时间窗口”)
+        if (config.access_enabled === false) {
+            lockDown("status-closed", "🚫 通道已关闭", "当前不在开放下载时段，请等待管理员通知");
+            return;
         }
 
-        function download(type) {
-            if(!currentHash) return;
-            
-            let fileName = "";
-            if(type === 'PROGRAM') fileName = "EIVEN_Program.zip";
-            else if(type === 'KEY') fileName = "EIVEN_License.zip";
+        // 2. 检查时间窗口
+        // 兼容 iOS/Safari 的日期格式 (将空格换成 T 或直接解析)
+        // Builder 生成格式: "2023-10-27 12:00:00" -> JS Date 可能需要 "2023/10/27..."
+        const now = new Date();
+        const start = new Date(config.valid_from.replace(/-/g, "/")); 
+        const end = new Date(config.valid_until.replace(/-/g, "/"));
 
-            const url = `./releases/${currentHash}/${fileName}`;
-            window.location.href = url;
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            // 如果时间解析失败，开放访问但提示警告
+            unlock("✅ 通道开放中 (时间格式忽略)");
+            return;
         }
-    </script>
+
+        if (now < start) {
+            lockDown("status-wait", "⏳ 尚未开放", `开放时间: ${config.valid_from}`);
+        } else if (now > end) {
+            lockDown("status-closed", "⛔ 开放时间已过", `截止时间: ${config.valid_until}`);
+        } else {
+            // 3. 一切正常，解锁界面
+            unlock(`请在 ${config.valid_until} 前完成下载`);
+        }
+    }
+
+    // 锁定界面：显示红/黄框，隐藏输入框
+    function lockDown(cssClass, mainText, subText) {
+        statusBox.className = "status-box " + cssClass;
+        statusBox.textContent = mainText;
+        timeMsg.innerText = subText || "";
+        inputArea.classList.add('hidden'); // 物理隐藏输入框
+        resultArea.classList.add('hidden');
+    }
+
+    // 解锁界面：显示绿框，显示输入框
+    function unlock(subText) {
+        statusBox.className = "status-box status-open";
+        statusBox.textContent = "✅ 通道开放中";
+        timeMsg.innerText = subText || "";
+        inputArea.classList.remove('hidden'); // 显示输入框
+    }
+
+    // 核心逻辑：验证 ID 并计算下载链接
+    function checkAndDownload() {
+        const oid = document.getElementById('orderId').value.trim();
+        const btnVerify = document.getElementById('btnVerify');
+
+        if (!oid) { alert("请输入验证码"); return; }
+
+        btnVerify.disabled = true;
+        btnVerify.textContent = "正在校验...";
+
+        try {
+            // 1. 计算哈希 (SHA256) - 必须与 Python 算法一致
+            const rawHash = CryptoJS.SHA256(oid + SEED).toString(CryptoJS.enc.Hex);
+            const hashId = rawHash.substring(0, 16).toLowerCase();
+
+            // 2. 构造文件路径
+            // GitHub Pages 路径结构: ./releases/{hashId}/EIVEN_Program.zip
+            const progUrl = `./releases/${hashId}/EIVEN_Program.zip`;
+            const keyUrl = `./releases/${hashId}/EIVEN_License.zip`;
+
+            // 3. 探测文件是否存在 (使用 HEAD 请求)
+            // 这一步是为了验证用户输入的 ID 是否真实存在于服务器上
+            fetch(progUrl, { method: 'HEAD' })
+                .then(res => {
+                    if (res.ok) {
+                        // 存在 -> 显示下载按钮
+                        document.getElementById('linkProg').href = progUrl;
+                        document.getElementById('linkKey').href = keyUrl;
+                        
+                        inputArea.classList.add('hidden'); // 隐藏输入框防止重复提交
+                        statusBox.textContent = "🎉 验证成功";
+                        resultArea.classList.remove('hidden');
+                    } else {
+                        throw new Error("404 Not Found");
+                    }
+                })
+                .catch(err => {
+                    alert("❌ 验证失败：未找到该订单文件。\n请检查验证码是否输入正确，或联系管理员。");
+                    btnVerify.disabled = false;
+                    btnVerify.textContent = "查询并获取文件";
+                });
+
+        } catch (e) {
+            alert("系统错误: " + e.message);
+            btnVerify.disabled = false;
+        }
+    }
+</script>
+
 </body>
 </html>
