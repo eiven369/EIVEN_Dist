@@ -142,11 +142,17 @@
     }
 
     // 核心逻辑：验证 ID 并计算下载链接
+    // 核心逻辑：验证 ID 并计算下载链接
     function checkAndDownload() {
-        const oid = document.getElementById('orderId').value.trim();
+        const oid = document.getElementById('orderId').value.trim(); // 这里加了 trim() 去除空格
         const btnVerify = document.getElementById('btnVerify');
 
         if (!oid) { alert("请输入验证码"); return; }
+
+        // [关键] 检查 ID 是否包含空格（针对您说的短 ID 问题）
+        if (oid.indexOf(" ") !== -1) {
+            alert("⚠️ 警告：验证码中似乎包含空格，请检查是否复制错误。");
+        }
 
         btnVerify.disabled = true;
         btnVerify.textContent = "正在校验...";
@@ -162,12 +168,12 @@
             const keyUrl = `./releases/${hashId}/EIVEN_License.zip`;
 
             // 3. 探测文件是否存在 (使用 HEAD 请求)
-            // 这一步是为了验证用户输入的 ID 是否真实存在于服务器上
-            // 3. 探测文件 (增加 ?t=... 防止浏览器缓存 404 状态)
+            // [防缓存策略] 增加 ?t=时间戳，强制浏览器每次都向服务器确认文件是否存在
+            // 这样能解决“刚生成时报404，过一会生成好了浏览器还报404”的问题
             const checkUrl = `${progUrl}?t=${new Date().getTime()}`;
+
             fetch(checkUrl, { method: 'HEAD' })
-                .then(res => {
-                .then(res => {
+                .then(res => {   // <--- 注意：这里只有一行了
                     if (res.ok) {
                         // 存在 -> 显示下载按钮
                         document.getElementById('linkProg').href = progUrl;
@@ -175,13 +181,16 @@
                         
                         inputArea.classList.add('hidden'); // 隐藏输入框防止重复提交
                         statusBox.textContent = "🎉 验证成功";
+                        statusBox.className = "status-box status-open";
                         resultArea.classList.remove('hidden');
                     } else {
+                        // 如果是 404，说明文件还没同步到 GitHub，或者 ID 错误
                         throw new Error("404 Not Found");
                     }
                 })
                 .catch(err => {
-                    alert("❌ 验证失败：未找到该订单文件。\n请检查验证码是否输入正确，或联系管理员。");
+                    console.log("验证失败:", err); // 方便 F12 调试
+                    alert("❌ 验证失败：未找到该订单文件。\n\n可能原因：\n1. 验证码输入错误\n2. 刚刚生成，GitHub 正在同步中(请等1分钟)\n3. 浏览器缓存 (请尝试 Ctrl+F5 刷新)");
                     btnVerify.disabled = false;
                     btnVerify.textContent = "查询并获取文件";
                 });
@@ -189,6 +198,7 @@
         } catch (e) {
             alert("系统错误: " + e.message);
             btnVerify.disabled = false;
+            btnVerify.textContent = "查询并获取文件";
         }
     }
 </script>
