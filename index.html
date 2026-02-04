@@ -102,14 +102,11 @@
         }
 
         // 2. 检查时间窗口
-        // 兼容 iOS/Safari 的日期格式 (将空格换成 T 或直接解析)
-        // Builder 生成格式: "2023-10-27 12:00:00" -> JS Date 可能需要 "2023/10/27..."
         const now = new Date();
         const start = new Date(config.valid_from.replace(/-/g, "/")); 
         const end = new Date(config.valid_until.replace(/-/g, "/"));
 
         if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-            // 如果时间解析失败，开放访问但提示警告
             unlock("✅ 通道开放中 (时间格式忽略)");
             return;
         }
@@ -119,37 +116,31 @@
         } else if (now > end) {
             lockDown("status-closed", "⛔ 开放时间已过", `截止时间: ${config.valid_until}`);
         } else {
-            // 3. 一切正常，解锁界面
             unlock(`请在 ${config.valid_until} 前完成下载`);
         }
     }
 
-    // 锁定界面：显示红/黄框，隐藏输入框
     function lockDown(cssClass, mainText, subText) {
         statusBox.className = "status-box " + cssClass;
         statusBox.textContent = mainText;
         timeMsg.innerText = subText || "";
-        inputArea.classList.add('hidden'); // 物理隐藏输入框
+        inputArea.classList.add('hidden');
         resultArea.classList.add('hidden');
     }
 
-    // 解锁界面：显示绿框，显示输入框
     function unlock(subText) {
         statusBox.className = "status-box status-open";
         statusBox.textContent = "✅ 通道开放中";
         timeMsg.innerText = subText || "";
-        inputArea.classList.remove('hidden'); // 显示输入框
+        inputArea.classList.remove('hidden');
     }
 
-    // 核心逻辑：验证 ID 并计算下载链接
-    // 核心逻辑：验证 ID 并计算下载链接
     function checkAndDownload() {
-        const oid = document.getElementById('orderId').value.trim(); // 这里加了 trim() 去除空格
+        const oid = document.getElementById('orderId').value.trim();
         const btnVerify = document.getElementById('btnVerify');
 
         if (!oid) { alert("请输入验证码"); return; }
 
-        // [关键] 检查 ID 是否包含空格（针对您说的短 ID 问题）
         if (oid.indexOf(" ") !== -1) {
             alert("⚠️ 警告：验证码中似乎包含空格，请检查是否复制错误。");
         }
@@ -158,38 +149,31 @@
         btnVerify.textContent = "正在校验...";
 
         try {
-            // 1. 计算哈希 (SHA256) - 必须与 Python 算法一致
             const rawHash = CryptoJS.SHA256(oid + SEED).toString(CryptoJS.enc.Hex);
             const hashId = rawHash.substring(0, 16).toLowerCase();
 
-            // 2. 构造文件路径
-            // GitHub Pages 路径结构: ./releases/{hashId}/EIVEN_Program.zip
             const progUrl = `./releases/${hashId}/EIVEN_Program.zip`;
             const keyUrl = `./releases/${hashId}/EIVEN_License.zip`;
 
-            // 3. 探测文件是否存在 (使用 HEAD 请求)
-            // [防缓存策略] 增加 ?t=时间戳，强制浏览器每次都向服务器确认文件是否存在
-            // 这样能解决“刚生成时报404，过一会生成好了浏览器还报404”的问题
+            // [防缓存策略] 增加时间戳
             const checkUrl = `${progUrl}?t=${new Date().getTime()}`;
 
             fetch(checkUrl, { method: 'HEAD' })
-                .then(res => {   // <--- 注意：这里只有一行了
+                .then(res => {   
                     if (res.ok) {
-                        // 存在 -> 显示下载按钮
                         document.getElementById('linkProg').href = progUrl;
                         document.getElementById('linkKey').href = keyUrl;
                         
-                        inputArea.classList.add('hidden'); // 隐藏输入框防止重复提交
+                        inputArea.classList.add('hidden');
                         statusBox.textContent = "🎉 验证成功";
                         statusBox.className = "status-box status-open";
                         resultArea.classList.remove('hidden');
                     } else {
-                        // 如果是 404，说明文件还没同步到 GitHub，或者 ID 错误
                         throw new Error("404 Not Found");
                     }
                 })
                 .catch(err => {
-                    console.log("验证失败:", err); // 方便 F12 调试
+                    console.log("验证失败:", err);
                     alert("❌ 验证失败：未找到该订单文件。\n\n可能原因：\n1. 验证码输入错误\n2. 刚刚生成，GitHub 正在同步中(请等1分钟)\n3. 浏览器缓存 (请尝试 Ctrl+F5 刷新)");
                     btnVerify.disabled = false;
                     btnVerify.textContent = "查询并获取文件";
