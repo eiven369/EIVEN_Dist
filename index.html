@@ -163,7 +163,10 @@
 
             // 3. 探测文件是否存在 (使用 HEAD 请求)
             // 这一步是为了验证用户输入的 ID 是否真实存在于服务器上
-            fetch(progUrl, { method: 'HEAD' })
+            // 3. 探测文件 (增加 ?t=... 防止浏览器缓存 404 状态)
+            const checkUrl = `${progUrl}?t=${new Date().getTime()}`;
+            fetch(checkUrl, { method: 'HEAD' })
+                .then(res => {
                 .then(res => {
                     if (res.ok) {
                         // 存在 -> 显示下载按钮
