@@ -159,6 +159,73 @@
             statusBox.classList.add('hidden');
         }
     }
+    async function probeReleaseFilesPatched(progUrl, keyUrl) {
+        const stamp = `?t=${Date.now()}`;
+        const [progRes, keyRes] = await Promise.allSettled([
+            fetch(progUrl + stamp, { method: 'HEAD', cache: 'no-store' }),
+            fetch(keyUrl + stamp, { method: 'HEAD', cache: 'no-store' })
+        ]);
+
+        return {
+            hasProg: progRes.status === 'fulfilled' && progRes.value.ok,
+            hasKey: keyRes.status === 'fulfilled' && keyRes.value.ok
+        };
+    }
+
+    verifyOrder = async function () {
+        const orderId = document.getElementById('orderId').value.trim();
+        if (!orderId) {
+            alert("Please enter Order ID");
+            return;
+        }
+
+        const btnVerify = document.getElementById('btnVerify');
+        const statusBox = document.getElementById('statusBox');
+        const inputArea = document.getElementById('inputArea');
+        const resultArea = document.getElementById('resultArea');
+        const rulesBox = document.getElementById('serverRulesBox');
+        const linkProg = document.getElementById('linkProg');
+        const linkKey = document.getElementById('linkKey');
+
+        btnVerify.disabled = true;
+        btnVerify.textContent = "Checking...";
+        rulesBox.classList.add('hidden');
+        statusBox.classList.remove('hidden');
+        statusBox.textContent = "Checking release files...";
+        statusBox.className = "status-box status-loading";
+        resultArea.classList.add('hidden');
+
+        try {
+            const salt = "EIVEN_SECURE_2026_SYSTEM_SALT_X9";
+            const fullHash = await sha256(orderId + salt);
+            const hashId = fullHash.substring(0, 16).toLowerCase();
+            const progUrl = `./releases/${hashId}/EIVEN_Program.zip`;
+            const keyUrl = `./releases/${hashId}/EIVEN_License.zip`;
+            const { hasProg, hasKey } = await probeReleaseFilesPatched(progUrl, keyUrl);
+
+            if (!hasProg && !hasKey) {
+                throw new Error('NOT_FOUND');
+            }
+
+            linkProg.href = progUrl;
+            linkKey.href = keyUrl;
+            linkProg.style.display = hasProg ? 'block' : 'none';
+            linkKey.style.display = hasKey ? 'block' : 'none';
+
+            inputArea.classList.add('hidden');
+            statusBox.textContent = hasProg && hasKey
+                ? "Order verified"
+                : "Order verified (partial files ready)";
+            statusBox.className = "status-box status-open";
+            resultArea.classList.remove('hidden');
+        } catch (e) {
+            alert("Order not found in cloud release.\n\nPossible causes:\n1. Order ID is incorrect\n2. GitHub Pages is still syncing\n3. Try Ctrl+F5 to refresh cache");
+            btnVerify.disabled = false;
+            btnVerify.textContent = "Verify and Claim";
+            rulesBox.classList.remove('hidden');
+            statusBox.classList.add('hidden');
+        }
+    };
 </script>
 </body>
 </html>

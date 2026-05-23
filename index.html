@@ -185,6 +185,62 @@
             btnVerify.textContent = "查询并获取文件";
         }
     }
+    async function probeReleaseFilesPatched(progUrl, keyUrl) {
+        const stamp = `?t=${Date.now()}`;
+        const [progRes, keyRes] = await Promise.allSettled([
+            fetch(progUrl + stamp, { method: 'HEAD', cache: 'no-store' }),
+            fetch(keyUrl + stamp, { method: 'HEAD', cache: 'no-store' })
+        ]);
+
+        return {
+            hasProg: progRes.status === 'fulfilled' && progRes.value.ok,
+            hasKey: keyRes.status === 'fulfilled' && keyRes.value.ok
+        };
+    }
+
+    checkAndDownload = async function () {
+        const oid = document.getElementById('orderId').value.trim();
+        const btnVerify = document.getElementById('btnVerify');
+        const linkProg = document.getElementById('linkProg');
+        const linkKey = document.getElementById('linkKey');
+
+        if (!oid) {
+            alert("Please enter Order ID");
+            return;
+        }
+
+        btnVerify.disabled = true;
+        btnVerify.textContent = "Checking...";
+        resultArea.classList.add('hidden');
+
+        try {
+            const rawHash = CryptoJS.SHA256(oid + SEED).toString(CryptoJS.enc.Hex);
+            const hashId = rawHash.substring(0, 16).toLowerCase();
+            const progUrl = `./releases/${hashId}/EIVEN_Program.zip`;
+            const keyUrl = `./releases/${hashId}/EIVEN_License.zip`;
+            const { hasProg, hasKey } = await probeReleaseFilesPatched(progUrl, keyUrl);
+
+            if (!hasProg && !hasKey) {
+                throw new Error('NOT_FOUND');
+            }
+
+            linkProg.href = progUrl;
+            linkKey.href = keyUrl;
+            linkProg.style.display = hasProg ? 'block' : 'none';
+            linkKey.style.display = hasKey ? 'block' : 'none';
+
+            inputArea.classList.add('hidden');
+            statusBox.textContent = hasProg && hasKey
+                ? "Order verified"
+                : "Order verified (partial files ready)";
+            statusBox.className = "status-box status-open";
+            resultArea.classList.remove('hidden');
+        } catch (e) {
+            alert("Order not found in cloud release.\n\nPossible causes:\n1. Order ID is incorrect\n2. GitHub Pages is still syncing\n3. Try Ctrl+F5 to refresh cache");
+            btnVerify.disabled = false;
+            btnVerify.textContent = "Check and Download";
+        }
+    };
 </script>
 
 </body>
