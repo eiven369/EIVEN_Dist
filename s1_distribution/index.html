@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>EIVEN ReaSnow S1 配置提取</title>
+  <style>
+    :root{--bg:#07111f;--panel:#101d2e;--line:#263b55;--text:#edf6ff;--muted:#94a9c1;--blue:#45a3ff;--green:#3ddc97;--red:#ff6b78}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at top,#17365b 0,#07111f 55%);font-family:"Microsoft YaHei",system-ui;color:var(--text);padding:24px}
+    .card{width:min(560px,100%);background:rgba(16,29,46,.96);border:1px solid var(--line);border-radius:20px;padding:30px;box-shadow:0 28px 70px rgba(0,0,0,.4)}
+    .brand{font-size:12px;letter-spacing:.22em;color:var(--blue);font-weight:800}.title{font-size:28px;margin:8px 0}.desc{color:var(--muted);line-height:1.7;margin-bottom:20px}
+    .status{padding:13px 15px;border-radius:10px;background:#0a1625;border:1px solid var(--line);margin-bottom:18px;color:var(--muted)}
+    label{display:block;font-size:13px;color:#b7c8da;margin:13px 0 7px}input,textarea{width:100%;border:1px solid var(--line);background:#091522;color:var(--text);border-radius:10px;padding:13px;font-size:15px;outline:none}textarea{min-height:118px;resize:vertical}input:focus,textarea:focus{border-color:var(--blue)}
+    button{width:100%;margin-top:20px;border:0;border-radius:11px;padding:14px;background:linear-gradient(135deg,#258cf1,#56b4ff);color:white;font-size:16px;font-weight:800;cursor:pointer}button:disabled{opacity:.55;cursor:wait}
+    .message{display:none;margin-top:18px;padding:14px;border-radius:10px;line-height:1.65}.ok{display:block;background:rgba(61,220,151,.12);border:1px solid rgba(61,220,151,.45);color:#a9f4d1}.error{display:block;background:rgba(255,107,120,.12);border:1px solid rgba(255,107,120,.45);color:#ffc1c7}
+    .downloads{display:grid;gap:10px;margin-top:15px}.download{display:block;padding:13px;border-radius:10px;text-decoration:none;color:var(--text);background:#0a1727;border:1px solid #31547b}.foot{font-size:12px;color:#6f879f;text-align:center;margin-top:20px}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand">EIVEN × SORA1LY</div>
+    <h1 class="title">ReaSnow S1 配置提取</h1>
+    <p class="desc" id="supportText">首次提交会绑定订单与S1 SN；配置尚未上传时请等待管理员处理后再次提取。</p>
+    <div class="status" id="statusBox">正在读取S1独立开放时间……</div>
+    <label for="orderId">订单号</label>
+    <input id="orderId" autocomplete="off" placeholder="输入购买时的订单号">
+    <label for="snText">S1配置信息或SN</label>
+    <textarea id="snText" placeholder="可粘贴S1 App复制信息，或直接输入24位SN"></textarea>
+    <button id="extractButton">提取配置</button>
+    <div id="message" class="message"></div>
+    <div id="downloads" class="downloads"></div>
+    <div class="foot">绑定记录与客户配置均采用加密或哈希路径存储</div>
+  </main>
+<script>
+let portalConfig={};let rules={};
+const statusBox=document.getElementById('statusBox');const button=document.getElementById('extractButton');const message=document.getElementById('message');const downloads=document.getElementById('downloads');
+window.addEventListener('load',async()=>{try{[portalConfig,rules]=await Promise.all([loadJson('portal_config.json'),loadJson('server_status.json')]);document.title=portalConfig.site_title||document.title;document.getElementById('supportText').textContent=portalConfig.support_text||'';renderStatus()}catch(error){statusBox.textContent='无法读取S1云端状态，请稍后重试';button.disabled=true}});
+button.addEventListener('click',extract);
+async function extract(){clearResult();const orderId=document.getElementById('orderId').value.trim();const sn=document.getElementById('snText').value.trim();if(!orderId||!sn){show('请完整输入订单号和S1 SN。',false);return}if(!portalConfig.api_base_url){show('S1安全接收API尚未启用，请等待管理员完成云端部署。',false);return}button.disabled=true;button.textContent='正在验证并提取……';try{const response=await fetch(portalConfig.api_base_url.replace(/\/$/,'')+'/api/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:orderId,sn})});const payload=await response.json();if(!response.ok||!payload.ok)throw new Error(payload.message||'验证失败');if(payload.release_token){const ready=await probeRelease(payload.release_token);if(ready.length){show('验证成功，客户专属配置已经准备完成。',true);for(const item of ready){const link=document.createElement('a');link.className='download';link.textContent='下载 '+item.name;link.href=item.url;downloads.appendChild(link)}}else{show(payload.message||'绑定已通过，请等待管理员上传配置后再次提取。',true)}}else{show(payload.message||'绑定已通过，请等待管理员上传。',true)}}catch(error){show(error.message||String(error),false)}finally{button.disabled=false;button.textContent='提取配置'}}
+async function probeRelease(token){const manifest=await loadJson('release_manifest.json');const results=[];for(const name of manifest.files||[]){const url=`releases/${token}/${encodeURIComponent(name)}`;try{const response=await fetch(url+'?t='+Date.now(),{method:'HEAD',cache:'no-store'});if(response.ok)results.push({name,url})}catch(_error){}}return results}
+function renderStatus(){const bind=openNow(rules.binding_enabled,rules.binding_valid_from,rules.binding_valid_until);const down=openNow(rules.download_enabled,rules.download_valid_from,rules.download_valid_until);statusBox.textContent=bind?`首次绑定开放中，截止 ${rules.binding_valid_until}`:down?'首次绑定已关闭，已绑定客户仍可提取配置':'S1绑定与下载通道当前均已关闭';button.disabled=!bind&&!down}
+function openNow(enabled,fromText,untilText){if(enabled!==true)return false;const now=Date.now(),start=Date.parse(String(fromText||'').replace(/-/g,'/')),end=Date.parse(String(untilText||'').replace(/-/g,'/'));return(!Number.isFinite(start)||now>=start)&&(!Number.isFinite(end)||now<=end)}
+async function loadJson(path){const response=await fetch(path+'?t='+Date.now(),{cache:'no-store'});if(!response.ok)throw new Error(path+' HTTP '+response.status);return response.json()}
+function clearResult(){message.className='message';message.textContent='';downloads.innerHTML=''}function show(text,ok){message.className='message '+(ok?'ok':'error');message.textContent=text}
+</script>
+</body>
+</html>
