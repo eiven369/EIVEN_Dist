@@ -8,20 +8,19 @@
     :root{--bg:#07111f;--panel:#101d2e;--line:#263b55;--text:#edf6ff;--muted:#94a9c1;--blue:#45a3ff;--green:#3ddc97;--red:#ff6b78}
     *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at top,#17365b 0,#07111f 55%);font-family:"Microsoft YaHei",system-ui;color:var(--text);padding:24px}
     .card{width:min(560px,100%);background:rgba(16,29,46,.96);border:1px solid var(--line);border-radius:20px;padding:30px;box-shadow:0 28px 70px rgba(0,0,0,.4)}
-    .brand{font-size:12px;letter-spacing:.22em;color:var(--blue);font-weight:800}.title{font-size:28px;margin:8px 0}.desc{color:var(--muted);line-height:1.7;margin-bottom:20px}
-    .status{padding:13px 15px;border-radius:10px;background:#0a1625;border:1px solid var(--line);margin-bottom:18px;color:var(--muted)}
-    label{display:block;font-size:13px;color:#b7c8da;margin:13px 0 7px}input,textarea{width:100%;border:1px solid var(--line);background:#091522;color:var(--text);border-radius:10px;padding:13px;font-size:15px;outline:none}textarea{min-height:118px;resize:vertical}input:focus,textarea:focus{border-color:var(--blue)}
+    .title{font-size:28px;margin:0 0 6px}.subtitle{color:var(--blue);font-size:14px;font-weight:700;margin-bottom:20px}
+    .status{padding:13px 15px;border-radius:10px;background:#0a1625;border:1px solid var(--line);margin-bottom:18px;color:var(--muted);line-height:1.6}.status-open{border-color:rgba(61,220,151,.55);color:#a9f4d1}.status-wait{border-color:#d4a72c;color:#ffe49a}.status-closed{border-color:rgba(255,107,120,.55);color:#ffc1c7}
+    label{display:block;font-size:13px;color:#b7c8da;margin:13px 0 7px}input,textarea{width:100%;border:1px solid var(--line);background:#091522;color:var(--text);border-radius:10px;padding:13px;font-size:15px;outline:none}textarea{min-height:118px;resize:vertical}input:focus,textarea:focus{border-color:var(--blue)}input:disabled,textarea:disabled{opacity:.55;cursor:not-allowed}
     button{width:100%;margin-top:20px;border:0;border-radius:11px;padding:14px;background:linear-gradient(135deg,#258cf1,#56b4ff);color:white;font-size:16px;font-weight:800;cursor:pointer}button:disabled{opacity:.55;cursor:wait}
     .message{display:none;margin-top:18px;padding:14px;border-radius:10px;line-height:1.65}.ok{display:block;background:rgba(61,220,151,.12);border:1px solid rgba(61,220,151,.45);color:#a9f4d1}.error{display:block;background:rgba(255,107,120,.12);border:1px solid rgba(255,107,120,.45);color:#ffc1c7}
-    .downloads{display:grid;gap:10px;margin-top:15px}.download{display:block;padding:13px;border-radius:10px;text-decoration:none;color:var(--text);background:#0a1727;border:1px solid #31547b}.portal-links{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}.portal-link{display:block;padding:11px;border-radius:10px;text-align:center;text-decoration:none;color:#cfe7ff;background:#0a1727;border:1px solid #31547b}.portal-link:hover{border-color:var(--blue);color:white}.foot{font-size:12px;color:#6f879f;text-align:center;margin-top:20px}
+    .downloads{display:grid;gap:10px;margin-top:15px}.download{display:block;padding:13px;border-radius:10px;text-decoration:none;color:var(--text);background:#0a1727;border:1px solid #31547b}
   </style>
 </head>
 <body>
   <main class="card">
-    <div class="brand">EIVEN × Sora1ly</div>
-    <h1 class="title">ReaSnow S1 配置提取</h1>
-    <p class="desc" id="supportText">输入个人编号与S1 SN，验证后提取专属配置。</p>
-    <div class="status" id="statusBox">正在读取S1下载状态……</div>
+    <h1 class="title">EIVEN × Sora1ly</h1>
+    <div class="subtitle">ReaSnow S1 配置提取</div>
+    <div class="status" id="statusBox">正在读取云端开放时间……</div>
     <label for="orderId">订单号或个人QQ编号</label>
     <input id="orderId" autocomplete="off" placeholder="输入管理员登记的订单号；仅使用QQ登记时输入QQ">
     <label for="snText">S1配置信息或SN</label>
@@ -29,23 +28,17 @@
     <button id="extractButton">提取配置</button>
     <div id="message" class="message"></div>
     <div id="downloads" class="downloads"></div>
-    <div class="portal-links">
-      <a id="githubPortal" class="portal-link" target="_blank" rel="noopener">GitHub 发布页面</a>
-      <a id="mirrorPortal" class="portal-link" target="_blank" rel="noopener">镜像发布页面</a>
-    </div>
-    <div class="foot">EIVEN × Sora1ly 专属配置发放</div>
   </main>
 <script>
 let portalConfig={};let rules={};
-const statusBox=document.getElementById('statusBox');const button=document.getElementById('extractButton');const message=document.getElementById('message');const downloads=document.getElementById('downloads');
-window.addEventListener('load',async()=>{try{[portalConfig,rules]=await Promise.all([loadJson('portal_config.json'),loadJson('server_status.json')]);document.title=portalConfig.site_title||document.title;document.getElementById('supportText').textContent=portalConfig.support_text||'';setPortalLink('githubPortal',portalConfig.github_pages_url);setPortalLink('mirrorPortal',portalConfig.mirror_url);renderStatus()}catch(error){statusBox.textContent='无法读取S1云端状态，请稍后重试';button.disabled=true}});
+const statusBox=document.getElementById('statusBox');const orderInput=document.getElementById('orderId');const snInput=document.getElementById('snText');const button=document.getElementById('extractButton');const message=document.getElementById('message');const downloads=document.getElementById('downloads');
+window.addEventListener('load',async()=>{try{[portalConfig,rules]=await Promise.all([loadJson('portal_config.json'),loadJson('server_status.json')]);document.title=portalConfig.site_title||document.title;renderStatus()}catch(error){setAvailability(false,'⚠️ 无法读取云端开放时间，请稍后重试','status-closed')}});
 button.addEventListener('click',extract);
-async function extract(){clearResult();const orderId=document.getElementById('orderId').value.trim();const sn=document.getElementById('snText').value.trim();if(!orderId||!sn){show('请完整输入订单号或个人编号，以及S1 SN。',false);return}if(!portalConfig.api_base_url){show('S1提取API尚未启用，请联系管理员。',false);return}button.disabled=true;button.textContent='正在验证并提取……';try{const response=await fetch(portalConfig.api_base_url.replace(/\/$/,'')+'/api/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:orderId,sn})});const payload=await response.json();if(!response.ok||!payload.ok)throw new Error(payload.message||'验证失败');if(payload.release_token){const ready=await probeRelease(payload.release_token);if(ready.length){show('验证成功，客户专属配置已经准备完成。',true);for(const item of ready){const link=document.createElement('a');link.className='download';link.textContent='下载 '+item.name;link.href=item.url;downloads.appendChild(link)}}else{show(payload.message||'身份验证通过，请等待管理员上传配置后再次提取。',true)}}else{show(payload.message||'身份验证通过，请等待管理员上传。',true)}}catch(error){show(error.message||String(error),false)}finally{button.disabled=false;button.textContent='提取配置'}}
+async function extract(){clearResult();const orderId=orderInput.value.trim();const sn=snInput.value.trim();if(!orderId||!sn){show('请完整输入订单号和S1 SN。',false);return}if(!portalConfig.api_base_url){show('云端提取接口尚未启用。',false);return}button.disabled=true;button.textContent='正在查询绑定……';try{const response=await fetch(portalConfig.api_base_url.replace(/\/$/,'')+'/api/extract',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:orderId,sn})});const payload=await response.json();if(!response.ok||!payload.ok)throw new Error(payload.message||'订单号与SN验证失败');if(!payload.release_token)throw new Error('配置文件尚未准备完成，请稍后重试。');const ready=await probeRelease(payload.release_token);if(!ready.length)throw new Error('配置文件尚未准备完成，请稍后重试。');show('验证通过，请下载配置文件。',true);for(const item of ready){const link=document.createElement('a');link.className='download';link.textContent='下载 '+item.name;link.href=item.url;link.setAttribute('download','');downloads.appendChild(link)}}catch(error){show(error.message||String(error),false)}finally{button.textContent='提取配置';renderStatus()}}
 async function probeRelease(token){const manifest=await loadJson('release_manifest.json');const results=[];for(const name of manifest.files||[]){const url=`releases/${token}/${encodeURIComponent(name)}`;try{const response=await fetch(url+'?t='+Date.now(),{method:'HEAD',cache:'no-store'});if(response.ok)results.push({name,url})}catch(_error){}}return results}
-function renderStatus(){const down=openNow(rules.download_enabled,rules.download_valid_from,rules.download_valid_until);statusBox.textContent=down?`管理员已登记客户可提取，截止 ${rules.download_valid_until}`:'S1配置下载通道当前已关闭';button.disabled=!down}
-function openNow(enabled,fromText,untilText){if(enabled!==true)return false;const now=Date.now(),start=Date.parse(String(fromText||'').replace(/-/g,'/')),end=Date.parse(String(untilText||'').replace(/-/g,'/'));return(!Number.isFinite(start)||now>=start)&&(!Number.isFinite(end)||now<=end)}
+function renderStatus(){const from=String(rules.download_valid_from||'').trim();const until=String(rules.download_valid_until||'').trim();const start=Date.parse(from.replace(/-/g,'/'));const end=Date.parse(until.replace(/-/g,'/'));const now=Date.now();if(rules.download_enabled!==true){setAvailability(false,'🔴 云端提取通道：已关闭','status-closed');return}if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start){setAvailability(false,'🔴 云端提取通道：时间配置无效','status-closed');return}if(now<start){setAvailability(false,`🟡 云端提取通道：尚未开放<br><span>开放时间：${from}</span>`,'status-wait');return}if(now>end){setAvailability(false,`🔴 云端提取通道：限时关闭<br><span>本期截止：${until}</span>`,'status-closed');return}setAvailability(true,`🟢 云端提取通道：开放中<br><span>${from} 至 ${until}</span>`,'status-open')}
+function setAvailability(open,text,statusClass){statusBox.className='status '+statusClass;statusBox.innerHTML=text;orderInput.disabled=!open;snInput.disabled=!open;button.disabled=!open}
 async function loadJson(path){const response=await fetch(path+'?t='+Date.now(),{cache:'no-store'});if(!response.ok)throw new Error(path+' HTTP '+response.status);return response.json()}
-function setPortalLink(id,url){const link=document.getElementById(id);const target=String(url||'').trim();if(target){link.href=target}else{link.hidden=true}}
 function clearResult(){message.className='message';message.textContent='';downloads.innerHTML=''}function show(text,ok){message.className='message '+(ok?'ok':'error');message.textContent=text}
 </script>
 </body>
