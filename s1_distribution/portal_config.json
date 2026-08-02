@@ -1,4 +1,4 @@
 {
-  "api_base_url": "https://eiven-s1-binding-gateway.eiven369-cloud.workers.dev",
+  "extraction_mode": "static_release",
   "site_title": "EIVEN × Sora1ly"
 }
