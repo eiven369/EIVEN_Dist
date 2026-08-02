@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "algorithm": "AES-256-GCM",
+  "nonce": "hMVrD0GWwnm0i0ic",
+  "ciphertext": "Liv8MCXh1YyMgyU32xHsO74sIusI9ogNUZrh+NWYWeNqVlLWkQ66mKgGP61s5fAW147fKY1BM8ACPkqwYUsSlvf9UCAsSlkYxcWa3SBAhh5klDGeYEz2GZhFpwdQZ7vvv/ubiF0pfDLIplluRr2RQ/vSRpiSwCBEMM/sePKXkT837uaSWUWCKolTzkXh9Y+dRMzgtA91vO+iSMpFtA==",
+  "created_at": "2026-08-02T11:46:21+08:00"
+}

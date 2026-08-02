@@ -3,8 +3,8 @@
   "binding_enabled": false,
   "binding_valid_from": "",
   "binding_valid_until": "",
-  "download_enabled": false,
+  "download_enabled": true,
   "download_valid_from": "2026-07-27 00:00:00",
   "download_valid_until": "2026-08-31 23:59:59",
-  "updated_at": "2026-08-02T11:14:34+08:00"
+  "updated_at": "2026-08-02T11:46:21+08:00"
 }
