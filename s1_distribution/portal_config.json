@@ -1,5 +1,7 @@
 {
   "api_base_url": "https://eiven-s1-binding-gateway.eiven369-cloud.workers.dev",
-  "site_title": "EIVEN ReaSnow S1 配置提取",
-  "support_text": "首次提交会绑定订单与S1 SN；配置尚未上传时请等待管理员处理后再次提取。"
+  "site_title": "EIVEN × Sora1ly",
+  "support_text": "输入个人编号与S1 SN，验证后提取专属配置。",
+  "github_pages_url": "https://eiven369.github.io/EIVEN_Dist/s1_distribution/",
+  "mirror_url": "https://down.eiven1769.top/s1_distribution/"
 }
