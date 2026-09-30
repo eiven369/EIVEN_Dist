@@ -1,8 +1,10 @@
 {
-  "schema_version": 1,
-  "updated_at": "2026-09-19T12:43:38+08:00",
-  "files": [
-    "ReasnowS1 AntiRecoil_V4  闲鱼 sora1ly × EIVEN.bkp",
-    "ReasnowS1 AntiRecoil_V5&6  闲鱼 sora1ly × EIVEN.bkp"
-  ]
+  "schema_version": 2,
+  "updated_at": "2026-09-30T19:46:45+08:00",
+  "required_platforms": [
+    "ps",
+    "xbox"
+  ],
+  "package_pattern": "<PS|XBOX>_S1_<order_id>.zip",
+  "customer_manifest": "release_manifest.json"
 }
