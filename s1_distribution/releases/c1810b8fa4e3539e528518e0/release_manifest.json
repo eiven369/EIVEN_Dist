@@ -1,0 +1,22 @@
+{
+  "schema_version": 2,
+  "batch_id": "20261102T130011276420+0800",
+  "order_id": "5127890221310000434",
+  "token": "c1810b8fa4e3539e528518e0",
+  "packages": [
+    {
+      "platform": "ps",
+      "name": "PS_S1_5127890221310000434.zip",
+      "size": 21726,
+      "sha256": "4BAD03F02584CA04B2EBE44815FF37935FF7C2FE34BF89A92F93B7339CF22EDF",
+      "bkp_count": 2
+    },
+    {
+      "platform": "xbox",
+      "name": "XBOX_S1_5127890221310000434.zip",
+      "size": 27425,
+      "sha256": "F2F76E168F640C6612BF1577FA72B945732C59A96A3EA00C02D186C9C87242C3",
+      "bkp_count": 2
+    }
+  ]
+}
