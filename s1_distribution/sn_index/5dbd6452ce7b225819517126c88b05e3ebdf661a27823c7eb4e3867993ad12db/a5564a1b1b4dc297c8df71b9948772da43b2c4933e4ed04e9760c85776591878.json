@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "algorithm": "AES-256-GCM",
+  "nonce": "HcMeKd0EvW/98CnQ",
+  "ciphertext": "nnH6hPulVvhvZosI1fgsUAFs+qenkgiJShcFOAFZnK4QtLzrEewMD/JjA7cxIFVrGo9H3V/cDadHjuQEN2C/AFxXjO5wIcenPm4IMvMCSfWhfbeIhFWh83LTL/M1sz7LWQCPdAm0SfrDm3UbAx90kgVkF7J2cTaMpY2mfA1++fOQHoeBxQauadMz0JlCvBTykajLwXpMfsly+cgMog8NJrw3tPxc5aiCrHm0hhWkvOetAHxm+y2jVrmd69LCJ5jsbpPGvtdhnlaKEVbEZooLiaj4LJD49pRpQXds3X+ZMWdWUxsCHOOFiFmJS4s=",
+  "created_at": "2026-11-06T21:02:01+08:00"
+}
